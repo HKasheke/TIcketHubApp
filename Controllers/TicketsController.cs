@@ -33,7 +33,7 @@ namespace TIcketHub.Controllers
                 return BadRequest(ModelState);
             }
 
-            string queueName = "orders";
+            string queueName = "tickethub";
 
             // Get connection string from secrets.json
             string? connectionString = _configuration["AzureStorageConnectionString"];
