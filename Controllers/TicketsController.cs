@@ -1,6 +1,7 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using System.Text.Json;
+using Azure.Storage.Queues;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Text.RegularExpressions;
 using TIcketHub.Models;
 
 namespace TIcketHub.Controllers
@@ -25,48 +26,32 @@ namespace TIcketHub.Controllers
         }
 
         [HttpPost]
-        public IActionResult Post(Purchase purchase)
+        public async Task<IActionResult> Post(Purchase purchase)
         {
-            if (!purchase.isValidEmail(purchase.Email))
+            if (ModelState.IsValid == false)
             {
-                return BadRequest("Invalid email");
+                return BadRequest(ModelState);
             }
 
-            if (!purchase.isValidName(purchase.Name))
+            string queueName = "orders";
+
+            // Get connection string from secrets.json
+            string? connectionString = _configuration["AzureStorageConnectionString"];
+
+            if (string.IsNullOrEmpty(connectionString))
             {
-                return BadRequest("Invalid name");
+                return BadRequest("An error was encountered");
             }
+            QueueClient queueClient = new QueueClient(connectionString, queueName);
+            
+            // serialize an object to json
+            string message = JsonSerializer.Serialize(purchase);
 
-            if (!purchase.isValidPhoneNumber(purchase.Phone))
-            {
-                return BadRequest("Invalid Phone number");
-            }
-
-            if (!purchase.isValidCreditNum(purchase.CreditCard))
-            {
-                return BadRequest("Invalid Credit card");
-            }
+            // send string message to queue
+            await queueClient.SendMessageAsync(message);
 
 
-            if (!purchase.isValidCreditExp(purchase.Expiration))
-            {
-                return BadRequest("Invalid Expiry");
-            }
-
-
-            if (!purchase.isValidCreditSecCode(purchase.SecurityCode))
-            {
-                return BadRequest("Invalid Security Code");
-            }
-
-
-            if (string.IsNullOrEmpty(purchase.Address))
-            {
-                return BadRequest("Invalid Credit card");
-            }
-
-            return Ok("Hello from post " + purchase.Name + "Email: " + purchase.Email);
+            return Ok("Purchase successful for " + purchase.Name + ", Email: " + purchase.Email);
         }
     }
 }
-         

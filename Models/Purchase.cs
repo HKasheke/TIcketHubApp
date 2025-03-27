@@ -1,106 +1,92 @@
-﻿using System.Numerics;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
 
 namespace TIcketHub.Models
 {
     public class Purchase
     {
-        public int ConcertId;
+        [Required]
+        public int ConcertId { get; set; }
+
+        [Required]
+        [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
         public string Email { get; set; } = string.Empty;
+
+        [Required]
+        [RegularExpression(@"^[^\d]+$", ErrorMessage = "Name cannot contain numbers.")]
         public string Name { get; set; } = string.Empty;
+
+        [Required]
+        [PhoneAttribute(ErrorMessage = "Please enter a valid phone number.")]
         public string Phone { get; set; } = string.Empty;
-        public int Quantity{ get; set; }
+
+        [Required]
+        [Range(1, 10, ErrorMessage = "Quantity must be between 1 and 10.")]
+        public int Quantity { get; set; }
+
+        [Required]
+        [CreditCard(ErrorMessage = "Please enter a valid credit card number.")]
         public string CreditCard { get; set; } = string.Empty;
+
+        [Required]
+        [RegularExpression(@"^([0][1-9]|1[0-2])\/(\d{2})$",
+            ErrorMessage = "Expiration date must be in format MM/YY.")]
+        [CustomExpirationDate(ErrorMessage = "The expiration date is invalid or expired.")]
         public string Expiration { get; set; } = string.Empty;
+
+        [Required]
+        [RegularExpression(@"^\d{3}$", ErrorMessage = "Security code must be 3 digits.")]
         public string SecurityCode { get; set; } = string.Empty;
+
+        [Required]
+        [RegularExpression(@"^\d+\s\w+\s\w+$", ErrorMessage = "Invalid Address")]
         public string Address { get; set; } = string.Empty;
+
+        [Required]
+        [RegularExpression(@"^[^\d]+$", ErrorMessage = "City cannot contain numbers.")]
         public string City { get; set; } = string.Empty;
+
+        [Required]
+        [RegularExpression(@"^[^\d]+$", ErrorMessage = "Province cannot contain numbers.")]
         public string Province { get; set; } = string.Empty;
+
+        [Required]
+        [RegularExpression(@"^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$",
+            ErrorMessage = "Please enter a valid postal code.")]
         public string PostalCode { get; set; } = string.Empty;
+
+        [Required]
+        [RegularExpression(@"^[^\d]+$", ErrorMessage = "Country cannot contain numbers.")]
         public string Country { get; set; } = string.Empty;
+    }
 
-        //TODO :sTHhsi
-        public bool isValidId (int concertId)
+    // Custom validation attribute for credit card expiration date
+    public class CustomExpirationDateAttribute : ValidationAttribute
+    {
+        protected override ValidationResult IsValid(object value, ValidationContext validationContext)
         {
-            return true;
-        }
-        public bool isValidEmail (string email)
-        {
-            Regex nonValidEmail = new Regex(@"^[^@\\s]+@[^@\\s]+\.[^@\\s]+$");
+            if (value == null)
+                return new ValidationResult("Expiration date is required.");
 
-            if(string.IsNullOrEmpty(email)){ return false; }
-
-            if(!nonValidEmail.IsMatch(email)) { return false; }
-
-            return true;
-        }
-
-        public bool isValidName (string name)
-        {
-            Regex nonNumericRegex = new Regex(@"\d");
-
-            if(string.IsNullOrEmpty(name)){ return false; }
-
-            if(nonNumericRegex.IsMatch(name)) { return false; }
-
-            return true;
-        }
-        public bool isValidPhoneNumber (string phoneNumber)
-        {
-            Regex nonPhoneNumber = new Regex(@"^(?:\+1)?\s?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$");
-
-            if(string.IsNullOrEmpty(phoneNumber)){ return false; }
-
-            if(!nonPhoneNumber.IsMatch(phoneNumber)) { return false; }
-
-            return true;
-        }
-        public bool isValidCreditNum(string creditCardNum)
-        {
-            Regex nonPhoneNumber = new Regex(@"^(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|6(?:011|5[0-9][0-9])[0-9]{12}|3[47][0-9]{13}|3(?:0[0-5]|[68][0-9])[0-9]{11}|(?:2131|1800|35\\d{3})\\d{11})$");
-
-            if(string.IsNullOrEmpty(creditCardNum)){ return false; }
-
-            if(!nonPhoneNumber.IsMatch(creditCardNum)) { return false; }
-
-            return true;
-        }
-
-        public bool isValidCreditExp(string expiry)
-        {
-
-            Regex nonExpiryDate = new Regex(@"^([0][1-9]|1[0-2])\/(\d{2})$");
-            
-            if(string.IsNullOrEmpty(expiry)){ return false; }
-
-            if(!nonExpiryDate.IsMatch(expiry)) { return false; }
+            string expiry = value.ToString();
+            if (!Regex.IsMatch(expiry, @"^([0][1-9]|1[0-2])\/(\d{2})$"))
+                return new ValidationResult("Expiration date must be in format MM/YY.");
 
             int CURRENT_CENTURY = 2000;
-
             string month = expiry.Substring(0, 2);
-            string year = expiry.Substring(3, 2); // get last two digits
+            string year = expiry.Substring(3, 2);
 
-            var dateExpired = new DateTime(int.Parse(year)+CURRENT_CENTURY, int.Parse(month), 1);
+            var dateExpired = new DateTime(int.Parse(year) + CURRENT_CENTURY, int.Parse(month), 1);
             var now = DateTime.Now;
 
-            //check year
-            if (dateExpired < now || dateExpired > now.AddYears(6))
-            {
-                return false;
-            }
+            if (dateExpired < now)
+                return new ValidationResult("The credit card has expired.");
 
-            return true;
+            if (dateExpired > now.AddYears(6))
+                return new ValidationResult("Expiration date is too far in the future.");
+
+            return ValidationResult.Success;
         }
-        public bool isValidCreditSecCode(string securityCode)
-        {
-            Regex nonSecurityCode = new Regex(@"^\d{3}$");
-
-            if(string.IsNullOrEmpty(securityCode)){ return false; }
-
-            if(!nonSecurityCode.IsMatch(securityCode)) { return false; }
-
-            return true;
-        }
-
     }
 }
