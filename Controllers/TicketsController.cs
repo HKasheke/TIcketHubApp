@@ -1,6 +1,5 @@
 ﻿using System.Text.Json;
 using Azure.Storage.Queues;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using TIcketHub.Models;
 
