@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Text;
+using System.Text.Json;
 using Azure.Storage.Queues;
 using Microsoft.AspNetCore.Mvc;
 using TIcketHub.Models;
@@ -47,7 +48,8 @@ namespace TIcketHub.Controllers
             string message = JsonSerializer.Serialize(purchase);
 
             // send string message to queue
-            await queueClient.SendMessageAsync(message);
+            var plainTextBytes = Encoding.UTF8.GetBytes(message);
+            await queueClient.SendMessageAsync(Convert.ToBase64String(plainTextBytes));
 
 
             return Ok("Purchase successful for " + purchase.Name + ", Email: " + purchase.Email);
